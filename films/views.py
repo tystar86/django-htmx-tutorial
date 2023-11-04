@@ -1,14 +1,16 @@
 from typing import Any
 from django.db.models.query import QuerySet
-from django.http.response import HttpResponse, HttpResponsePermanentRedirect
+from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import LoginView
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import HttpResponse
 from django.views.generic import FormView, TemplateView, ListView
-# from django.views.generic.list import ListView
-from django.contrib.auth import get_user_model
+from django.views.decorators.http import require_http_methods
 
 from films.forms import RegisterForm
 from films.models import Film
@@ -39,7 +41,7 @@ def check_username(request):
         return HttpResponse("<div id='username-error' class='success'>This username is available</div>") # with hx-swap="outerhtml"
     
 
-class FilmListView(ListView):
+class FilmListView(LoginRequiredMixin, ListView):
     template_name = "films.html"
     model = Film
     context_object_name = "films"
@@ -49,19 +51,36 @@ class FilmListView(ListView):
 
         return user.films.all()
 
-    
+
+@login_required
 def add_film(request):
     filmname = request.POST.get("filmname")
 
-    film = Film.objects.create(name=filmname)
+    film = Film.objects.get_or_create(name=filmname)[0]
 
     request.user.films.add(film)
 
+    messages.success(request, f"Added <em><b>{filmname}</b></em> to your list of films.")
+
     return render(request, "partials/film-list.html", {"films": request.user.films.all()})
 
 
+@login_required
+@require_http_methods(["DELETE"])
 def remove_film(request, pk):
-    Film.objects.filter(pk=pk).delete()
+    request.user.films.remove(pk)
 
     return render(request, "partials/film-list.html", {"films": request.user.films.all()})
+
+
+@login_required
+def search_film(request):
+    search_text = request.POST.get("search")
+    user_film_names = request.user.films.all().values_list("name", flat=True)
+    results = Film.objects.filter(name__icontains=search_text).exclude(name__in=user_film_names)
+
+    return render(request, "partials/search-results.html", {"results": results})
     
+
+def message_clear(request):
+    return HttpResponse("")

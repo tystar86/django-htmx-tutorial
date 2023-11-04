@@ -14,6 +14,8 @@ hmtx_views = [
     path("check-username/", views.check_username, name="check_username"),
     path("add-film/", views.add_film, name="add_film"),
     path("remove-film/<int:pk>", views.remove_film, name="remove_film"),
+    path("search-film/", views.search_film, name="search_film"),
+    path("message-clear/", views.message_clear, name="message_clear"),
 ]
 
 urlpatterns += hmtx_views
