@@ -1,13 +1,17 @@
+from typing import Any
+from django.db.models.query import QuerySet
 from django.http.response import HttpResponse, HttpResponsePermanentRedirect
 from django.shortcuts import render
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.http import HttpResponse
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView, TemplateView, ListView
+# from django.views.generic.list import ListView
 from django.contrib.auth import get_user_model
 
 from films.forms import RegisterForm
+from films.models import Film
 
 # Create your views here.
 class IndexView(TemplateView):
@@ -22,7 +26,7 @@ class RegisterView(FormView):
     success_url = reverse_lazy("login")
 
     def form_valid(self, form):
-        form.save()  # save the user
+        form.save()
         return super().form_valid(form)
 
 def check_username(request):
@@ -33,3 +37,27 @@ def check_username(request):
         # return HttpResponse("This username already exists!")
     else:
         return HttpResponse("<div id='username-error' class='success'>This username is available</div>") # with hx-swap="outerhtml"
+    
+
+class FilmListView(ListView):
+    template_name = "films.html"
+    model = Film
+    context_object_name = "films"
+
+    def get_queryset(self) -> QuerySet[Any]:
+        user = self.request.user
+
+        return user.films.all()
+
+    
+def add_film(request):
+    filmname = request.POST.get("filmname")
+
+    film = Film.objects.create(name=filmname)
+
+    request.user.films.add(film)
+
+    films = request.user.films.all()
+
+    return render(request, "partials/film-list.html", {"films": films})
+    
