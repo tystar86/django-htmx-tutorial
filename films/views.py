@@ -57,7 +57,11 @@ def add_film(request):
 
     request.user.films.add(film)
 
-    films = request.user.films.all()
+    return render(request, "partials/film-list.html", {"films": request.user.films.all()})
 
-    return render(request, "partials/film-list.html", {"films": films})
+
+def remove_film(request, pk):
+    Film.objects.filter(pk=pk).delete()
+
+    return render(request, "partials/film-list.html", {"films": request.user.films.all()})
     
