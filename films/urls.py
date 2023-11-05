@@ -16,6 +16,7 @@ hmtx_views = [
     path("remove-film/<int:pk>", views.remove_film, name="remove_film"),
     path("search-film/", views.search_film, name="search_film"),
     path("message-clear/", views.message_clear, name="message_clear"),
+    path("sort-films/", views.sort_films, name="sort_films"),
 ]
 
 urlpatterns += hmtx_views
