@@ -17,6 +17,9 @@ hmtx_views = [
     path("search-film/", views.search_film, name="search_film"),
     path("message-clear/", views.message_clear, name="message_clear"),
     path("sort-films/", views.sort_films, name="sort_films"),
+    path("detail-film/<int:pk>", views.detail_film, name="detail_film"),
+    path("film-list-partial>/", views.film_list_partial, name="film_list_partial"),
+    path("upload-film-photo/<int:pk>", views.upload_film_photo, name="upload_film_photo"),
 ]
 
 urlpatterns += hmtx_views

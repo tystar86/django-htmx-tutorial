@@ -1,7 +1,7 @@
 from typing import Any
 from django.db.models.query import QuerySet
 from django.http.response import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
@@ -19,9 +19,11 @@ from films.utils import get_order_for_new_film, reorder_films_after_delete
 
 class IndexView(TemplateView):
     template_name = "index.html"
-    
+
+
 class Login(LoginView):
     template_name = "registration/login.html"
+
 
 class RegisterView(FormView):
     form_class = RegisterForm
@@ -31,6 +33,7 @@ class RegisterView(FormView):
     def form_valid(self, form):
         form.save()
         return super().form_valid(form)
+
 
 def check_username(request):
     username = request.POST.get("username")
@@ -45,7 +48,7 @@ def check_username(request):
 class FilmListView(LoginRequiredMixin, ListView):
     template_name = "films.html"
     model = Film
-    context_object_name = "films"
+    context_object_name = "user_films"
 
     def get_queryset(self) -> QuerySet[Any]:
         return UserFilms.objects.filter(user=self.request.user)
@@ -65,7 +68,7 @@ def add_film(request):
 
     user_films = UserFilms.objects.filter(user=user)
 
-    return render(request, "partials/film-list.html", {"films": user_films})
+    return render(request, "partials/film-list.html", {"user_films": user_films})
 
 
 @login_required
@@ -77,7 +80,7 @@ def remove_film(request, pk):
 
     user_films = reorder_films_after_delete(user)
 
-    return render(request, "partials/film-list.html", {"films": user_films})
+    return render(request, "partials/film-list.html", {"user_films": user_films})
 
 
 @login_required
@@ -104,4 +107,29 @@ def sort_films(request):
         user_film.save(update_fields=["order"])
         films.append(user_film)
 
-    return render(request, "partials/film-list.html", {"films": user_films})
+    return render(request, "partials/film-list.html", {"user_films": user_films})
+
+
+@login_required
+def detail_film(request, pk):
+    print("detail_film", pk)
+    user_film = get_object_or_404(UserFilms, pk=pk)
+
+    return render(request, "partials/film-detail.html", {"user_film": user_film})
+
+
+@login_required
+def film_list_partial(request):
+    user_films =  UserFilms.objects.filter(user=request.user)
+    return render(request, "partials/film-list.html", {"user_films": user_films})
+
+
+@login_required
+def upload_film_photo(request, pk):
+
+    print("upload_film_photo", pk)
+    photo = request.FILES.get("photo")
+    user_film = get_object_or_404(UserFilms, pk=pk)
+    user_film.film.photo.save(photo.name, photo)
+
+    return render(request, "partials/film-detail.html", {"user_film": user_film})
