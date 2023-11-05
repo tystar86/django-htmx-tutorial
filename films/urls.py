@@ -8,6 +8,7 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("register/", views.RegisterView.as_view(), name="register"),
     path("films/", views.FilmListView.as_view(), name="film_list"),
+    path("users/", views.users_select, name="user_list"),
 ]
 
 hmtx_views = [
@@ -20,6 +21,7 @@ hmtx_views = [
     path("detail-film/<int:pk>", views.detail_film, name="detail_film"),
     path("film-list-partial/", views.film_list_partial, name="film_list_partial"),
     path("upload-film-photo/<int:pk>", views.upload_film_photo, name="upload_film_photo"),
+    path("fetch-movies-for-user/", views.fetch_movies_for_user, name="fetch_movies_for_user"),
 ]
 
 urlpatterns += hmtx_views

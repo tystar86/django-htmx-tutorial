@@ -1,0 +1,6 @@
+<select class="custom-select mb-4" name="user">
+    <option selected>Open this select menu</option>
+    {% for film in films %}
+        <option value="{{ film.pk }}">{{ film.name }}</option>
+    {% endfor %}
+</select>

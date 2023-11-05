@@ -9,11 +9,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.http import HttpResponse
-from django.views.generic import FormView, TemplateView, ListView
+from django.views.generic import FormView, TemplateView, ListView, View
 from django.views.decorators.http import require_http_methods
 
 from films.forms import RegisterForm
-from films.models import Film, UserFilms
+from films.models import Film, UserFilms, User
 from films.utils import get_order_for_new_film, reorder_films_after_delete
 
 
@@ -44,6 +44,21 @@ def check_username(request):
     else:
         return HttpResponse("<div id='username-error' class='success'>This username is available</div>") # with hx-swap="outerhtml"
     
+
+@login_required
+def users_select(request):
+    users = User.objects.all()
+
+    return render(request, "users.html", {"users": users})
+    
+
+@login_required
+def fetch_movies_for_user(request):
+    user_pk = request.GET.get("user")
+    films = Film.objects.filter(users=int(user_pk))
+
+    return render(request, "partials/film-select.html", {"films": films})
+
 
 class FilmListView(LoginRequiredMixin, ListView):
     template_name = "films.html"

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <select class="custom-select mb-4" name="user" hx-get="{% url 'fetch_movies_for_user' %}" hx-trigger="change" hx-target="#films">
+        <option selected>Open this select menu</option>
+        {% for user in users %}
+        <option value="{{ user.pk }}">{{ user.username }}</option>
+        {% endfor %}
+    </select>
+    <div id="films">
+        {% include "partials/film-select.html" %}
+    </div>
+{% endblock %}
