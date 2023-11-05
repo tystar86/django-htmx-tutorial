@@ -3,9 +3,7 @@ from films.models import UserFilms
 from typing import List
 
 
-def get_order_for_new_film(user) -> int:
-    existing_films = UserFilms.objects.filter(user=user)
-
+def get_order_for_new_film(existing_films) -> int:
     if not existing_films.exists():
         return 1
     else:
@@ -15,17 +13,20 @@ def get_order_for_new_film(user) -> int:
 
 
 def reorder_films_after_delete(user) -> List[UserFilms]:
-    existing_films = UserFilms.objects.filter(user=user)
+    existing_films = UserFilms.objects.prefetch_related("film").filter(user=user)
 
     if not existing_films.exists():
         return []
 
     films_count = existing_films.count()
     new_ordering = range(1, films_count + 1)
+    updated_films = []
 
     for index, user_film in zip(new_ordering, existing_films):
         user_film.order = index
-        user_film.save(update_fields=["order"])
+        updated_films.append(user_film)
+
+    UserFilms.objects.bulk_update(updated_films, ["order"])
 
     return existing_films
 

@@ -52,7 +52,7 @@ class FilmListView(LoginRequiredMixin, ListView):
     paginate_by = 2
 
     def get_queryset(self) -> QuerySet[Any]:
-        return UserFilms.objects.filter(user=self.request.user)
+        return UserFilms.objects.prefetch_related("film").filter(user=self.request.user)
 
     def get_template_names(self) -> list[str]:
         if self.request.htmx:
@@ -66,13 +66,13 @@ def add_film(request):
     filmname = request.POST.get("filmname")
 
     film = Film.objects.get_or_create(name=filmname)[0]
+    user_films = UserFilms.objects.prefetch_related("film").filter(user=user)
 
     if not UserFilms.objects.filter(film=film, user=user).exists():
-        UserFilms.objects.create(film=film, user=user, order=get_order_for_new_film(user)) # add order to the new film
+        UserFilms.objects.create(film=film, user=user, order=get_order_for_new_film(user_films)) # add order to the new film
 
     messages.success(request, f"Added <em><b>{filmname}</b></em> to your list of films.")
 
-    user_films = UserFilms.objects.filter(user=user)
 
     return render(request, "partials/film-list.html", {"user_films": user_films})
 
@@ -105,15 +105,21 @@ def message_clear(request):
 @login_required
 def sort_films(request):
     film_pks_order = request.POST.getlist("film_order")
+    user_films = UserFilms.objects.prefetch_related("film").filter(user=request.user)
     films = []
+    updated_films = []
 
     for index, film_pk in enumerate(film_pks_order, start=1):
-        user_film = UserFilms.objects.get(pk=film_pk)
-        user_film.order = index
-        user_film.save(update_fields=["order"])
+        user_film = next(f for f in user_films if f.pk == int(film_pk))
+
+        if user_film.order != index:
+            user_film.order = index
+            updated_films.append(user_film)
         films.append(user_film)
 
-    return render(request, "partials/film-list.html", {"user_films": user_films})
+    UserFilms.objects.bulk_update(updated_films, ["order"])
+
+    return render(request, "partials/film-list.html", {"user_films": films})
 
 
 @login_required
@@ -126,7 +132,7 @@ def detail_film(request, pk):
 
 @login_required
 def film_list_partial(request):
-    user_films =  UserFilms.objects.filter(user=request.user)
+    user_films = UserFilms.objects.prefetch_related("film").filter(user=request.user)
     return render(request, "partials/film-list.html", {"user_films": user_films})
 
 
